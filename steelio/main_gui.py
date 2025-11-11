@@ -41,7 +41,7 @@ def show_scenarios():
     data_folder = Path("data")
     scenario_files = sorted([f for f in data_folder.glob("scenario_*.xlsx")])
     if not scenario_files:
-        st.warning("No scenario files found in the 'data' directory. Please add files named like scenario_x_xxxx.xlsx.")
+        st.warning("No scenario files found in the 'data' directory.")
         return
 
     # Load all scenario dataframes into a dictionary: {filename: dataframe}
