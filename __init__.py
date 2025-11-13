@@ -1,1 +1,0 @@
-# Steel I-O Analysis Library
