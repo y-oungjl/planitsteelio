@@ -7,7 +7,7 @@ from libs.hydrogen_analyzer import HydrogenTableAnalyzer
 from libs.io_analyzer import IOTableAnalyzer
 
 class ScenarioAnalyzer:
-    def __init__(self, scenarios_file: str = '../data/scenario_1.xlsx'):
+    def __init__(self, scenarios_file: str = 'data/Data_v10.xlsx'):
         """Initialize the Scenario Analyzer with scenarios data."""
         self.scenarios_file = scenarios_file
         self.scenarios_data = None
@@ -18,15 +18,35 @@ class ScenarioAnalyzer:
         self.load_scenarios()
 
     def load_scenarios(self):
-        """Load scenarios from Excel file."""
+        """Load scenarios from Excel file, reading all sheets that start with 'scenario'."""
         print("Loading scenarios data...")
-        self.scenarios_data = pd.read_excel(self.scenarios_file)
+
+        # Get all sheet names from the Excel file
+        excel_file = pd.ExcelFile(self.scenarios_file)
+        scenario_sheets = [sheet for sheet in excel_file.sheet_names if sheet.lower().startswith('scenario')]
+
+        print(f"Found {len(scenario_sheets)} scenario sheets: {scenario_sheets}")
+
+        # Store sheet names for later reference
+        self.scenario_sheet_names = scenario_sheets
+
+        # Load and combine all scenario sheets
+        all_scenarios = []
+        for sheet_name in scenario_sheets:
+            df = pd.read_excel(self.scenarios_file, sheet_name=sheet_name)
+            # Add a column to track which sheet this row came from
+            df['scenario_sheet'] = sheet_name
+            all_scenarios.append(df)
+            print(f"  Loaded sheet '{sheet_name}' with {len(df)} rows")
+
+        # Concatenate all scenario dataframes
+        self.scenarios_data = pd.concat(all_scenarios, ignore_index=True)
 
         # Convert mixed data types to strings for consistency
         self.scenarios_data['input'] = self.scenarios_data['input'].astype(str)
         self.scenarios_data['sector'] = self.scenarios_data['sector'].astype(str)
 
-        print(f"Loaded {len(self.scenarios_data)} scenarios")
+        print(f"Total loaded: {len(self.scenarios_data)} scenarios")
         print(f"Years covered: {self.scenarios_data.columns[2:].tolist()}")
 
     def initialize_analyzers(self):
