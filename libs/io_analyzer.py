@@ -261,7 +261,8 @@ class IOTableAnalyzer:
             raise ValueError(f"Column for sector {final_target_sector} not found in {coeff_type} coefficient matrix")
         
         # Calculate direct effects: coefficient * demand_change
-        direct_impacts = selected_coeffs[final_target_sector] * demand_change
+        # Convert from million won to billion won
+        direct_impacts = selected_coeffs[final_target_sector] * demand_change / 1000
         
         # Remove zero or near-zero impacts and NaN values
         #significant_impacts = direct_impacts[(abs(direct_impacts) > 1e-6) & pd.notna(direct_impacts)]
