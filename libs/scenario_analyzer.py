@@ -7,7 +7,7 @@ from libs.hydrogen_analyzer import HydrogenTableAnalyzer
 from libs.io_analyzer import IOTableAnalyzer
 
 class ScenarioAnalyzer:
-    def __init__(self, scenarios_file: str = 'data/Data_v10.xlsx'):
+    def __init__(self, scenarios_file: str = 'data/Data_v11.xlsx'):
         """Initialize the Scenario Analyzer with scenarios data."""
         self.scenarios_file = scenarios_file
         self.scenarios_data = None
@@ -840,8 +840,8 @@ class ScenarioAnalyzer:
         2. Sector 4506 (IO Table)
         3. H2S (Hydrogen)
         4. H2T (Hydrogen)
-        5. Integrated 1610 & 4506
-        6. Integrated H2S & H2T
+        5. coal+renewable (1610 & 4506)
+        6. H2 value chain (H2S & H2T)
 
         Args:
             years: List of years to include (default: all available years from results)
@@ -918,7 +918,7 @@ class ScenarioAnalyzer:
         hydrogen_effect_map = {
             'productioncoeff': 'Indirect Production (billion won)',
             'valueaddedcoeff': 'Value Added (billion won)',
-            'jobcoeff': 'Job Creation (billion won)',
+            'jobcoeff': 'wage-inducing effect (billion won)',
             'directemploycoeff': 'Direct Employment (person/billion won)'
         }
 
@@ -952,7 +952,7 @@ class ScenarioAnalyzer:
                 summary_df['Import (billion won)'] = 'N/A'
                 # Reorder columns
                 cols = ['Indirect Production (billion won)', 'Import (billion won)', 'Value Added (billion won)',
-                       'Job Creation (billion won)', 'Direct Employment (person/billion won)']
+                       'wage-inducing effect (billion won)', 'Direct Employment (person/billion won)']
                 summary_df = summary_df[[c for c in cols if c in summary_df.columns]]
             else:
                 summary_df = create_summary_from_results(scenario_results, effect_map, is_hydrogen)
@@ -960,14 +960,14 @@ class ScenarioAnalyzer:
             summary_tables[sheet_name] = summary_df
 
         # Create integrated summaries using existing integration methods
-        print(f"\n{len(summary_tables)+1}. Creating summary for Integrated 1610 & 4506...")
+        print(f"\n{len(summary_tables)+1}. Creating summary for coal+renewable (1610 & 4506)...")
         integrated_io = self.integrate_sectors_1610_4506()
         if integrated_io:
             summary_tables['Integrated_1610_4506'] = create_summary_from_results(
                 integrated_io, io_effect_map, is_hydrogen=False
             )
 
-        print(f"\n{len(summary_tables)+1}. Creating summary for Integrated H2S & H2T...")
+        print(f"\n{len(summary_tables)+1}. Creating summary for H2 value chain (H2S & H2T)...")
         integrated_h2 = self.integrate_hydrogen_H2S_H2T()
         if integrated_h2:
             summary_df = create_summary_from_results(integrated_h2, hydrogen_effect_map, is_hydrogen=True)

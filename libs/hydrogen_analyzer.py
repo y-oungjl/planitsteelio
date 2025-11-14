@@ -108,10 +108,11 @@ class HydrogenTableAnalyzer:
 
         # Calculate direct effects: coefficient * demand_change
         if coeff_type == "directemploycoeff":
+            # For employment: (person/billion won) * (million won / 1000) = persons
             direct_impacts = selected_coeffs[scenario] * demand_change/1000
-
         else:
-            direct_impacts = selected_coeffs[scenario] * demand_change
+            # For economic effects: convert from million won to billion won
+            direct_impacts = selected_coeffs[scenario] * demand_change / 1000
 
         # Remove zero or near-zero impacts and NaN values
         #significant_impacts = direct_impacts[(abs(direct_impacts) > 1e-6) & pd.notna(direct_impacts)]
