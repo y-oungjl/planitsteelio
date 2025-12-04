@@ -1019,6 +1019,133 @@ class Visualization:
         plt.savefig(output_path, bbox_inches='tight', dpi=150)
         plt.show()
 
+    @staticmethod
+    def plot_code_h_treemap(
+        df,
+        effect=None,
+        year=2030,
+        output_path='code_h_treemap.html'
+    ):
+        """
+        Plot an interactive Plotly treemap showing Code_H categories.
+        Size: Absolute value of impact (larger impact = larger area)
+        Color: Positive (blue/green) vs Negative (red/orange)
+
+        Args:
+            df (pd.DataFrame): DataFrame with 'Code_H', 'Product_H', and value columns.
+            effect (str): Effect type to select column (e.g. 'indirect_prod').
+            year (int): Year to select column (e.g. 2030).
+            output_path (str): File path to save the generated treemap HTML.
+
+        Returns:
+            Plotly Figure object
+        """
+        import plotly.express as px
+
+        # Determine value column based on year and effect
+        if effect is not None:
+            possible_cols = [
+                f"{effect}_{year}",
+                f"{effect}",
+                f"Year_{year}",
+            ]
+        else:
+            possible_cols = [
+                f"Year_{year}",
+                'Year_2030'  # fallback
+            ]
+
+        # Find first match for value column
+        value_column = None
+        for col in possible_cols:
+            if col in df.columns:
+                value_column = col
+                break
+        if value_column is None:
+            raise ValueError(f"Could not find value column matching {possible_cols} in dataframe columns: {df.columns}")
+
+        # Prepare data
+        required_cols = {'Code_H', 'Product_H', value_column}
+        if not required_cols.issubset(df.columns):
+            raise ValueError(f"Missing required columns in dataframe: wanted {required_cols}")
+
+        df_prep = df[['Code_H', 'Product_H', value_column]].copy()
+
+        # Create size column using absolute values
+        df_prep['size'] = df_prep[value_column].abs()
+
+        # Filter out zero values
+        df_prep = df_prep[df_prep['size'] > 0].copy()
+
+        if len(df_prep) == 0:
+            raise ValueError("No non-zero values to display in treemap")
+
+        # Create labels with sign and formatted value
+        def format_value(row):
+            val = row[value_column]
+            sign = '+' if val >= 0 else ''
+            return f"{row['Product_H']}<br>{sign}{val:,.2f}"
+
+        df_prep['label'] = df_prep.apply(format_value, axis=1)
+
+        # Create color indicator (positive = 1, negative = -1)
+        df_prep['color_indicator'] = df_prep[value_column].apply(lambda x: 1 if x >= 0 else -1)
+
+        # Effect labels for title
+        effect_labels = {
+            'indirect_prod': 'Indirect Production (Billion Won)',
+            'indirect_import': 'Indirect Import (Billion Won)',
+            'value_added': 'Value Added (Billion Won)',
+            'jobcoeff': 'Job Creation (Persons)',
+            'directemploycoeff': 'Direct Employment (Persons)',
+            'productioncoeff': 'Production Coeff (Billion Won)',
+            'valueaddedcoeff': 'Value Added Coeff (Billion Won)'
+        }
+
+        title_text = effect_labels.get(effect, effect)
+
+        # Create treemap using plotly express
+        fig = px.treemap(
+            df_prep,
+            path=['label'],
+            values='size',
+            color='color_indicator',
+            color_continuous_scale=['#d73027', '#fee08b', '#1a9850'],  # Red to Yellow to Green
+            color_continuous_midpoint=0,
+            hover_data={'Code_H': True, value_column: ':.2f', 'size': False, 'color_indicator': False, 'label': False},
+        )
+
+        # Update layout
+        fig.update_layout(
+            title=dict(
+                text=f'Code_H Category Impact Treemap<br><sub>{title_text} | Year {year}<br>coal+renewable+H2 value chain</sub>',
+                x=0.5,
+                xanchor='center',
+                font=dict(size=16)
+            ),
+            width=1200,
+            height=800,
+            template='plotly_white',
+            margin=dict(l=10, r=10, t=100, b=10),
+        )
+
+        # Update traces for better text display
+        fig.update_traces(
+            textposition='middle center',
+            marker=dict(
+                line=dict(width=2, color='white')
+            )
+        )
+
+        # Hide colorbar
+        fig.update_coloraxes(showscale=False)
+
+        # Save to HTML
+        fig.write_html(output_path)
+        print(f"Interactive treemap saved to {output_path}")
+
+        return fig
+
 
 if __name__ == "__main__":
     from scenario_analyzer import ScenarioAnalyzer
