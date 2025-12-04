@@ -331,7 +331,7 @@ def run_scenario_analysis():
                 st.success(f"✅ Analysis complete for Data_v11.xlsx!")
 
                 # Show summary of results
-                st.markdown("### 📊 Analysis Summary")
+                st.markdown("### Note")
                 st.write(f"Coal&Renewable(한국은행 2023년 연장표), 그리고 H2(최수빈 외 2인, 2023)는 분석에 활용한 산업연관표가 상이하기 때문에 구분해서 분석하고 결과를 도출하는 것을 권장합니다.")
                 st.write(f"이러한 이유로 분석에 활용된 계수 종류가 산업연관표에 따라 상이할 수 있습니다.")
                 st.write(f"(예: 한국은행 연장표 - 생산유발효과, 수입유발효과, 부가가치유발효과, 고용유발효과,취업유발효과)")
