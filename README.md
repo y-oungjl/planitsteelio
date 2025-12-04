@@ -17,10 +17,10 @@ A comprehensive Input-Output (I-O) Table analysis tool for analyzing economic an
 - **Multi-Year Analysis**: Time-series analysis from 2026 to 2050
 
 ### **Advanced Visualizations**
-- **Interactive Plotly Charts**: Yearly trends, sector comparisons, heatmaps
-- **Code_H Heatmaps**: Top sector impacts by product category with 3-line labels
+- **Interactive Plotly Charts**: Yearly trends, sector comparisons, treemaps
+- **Code_H Treemaps**: Impact visualization by product category with size and color coding
 - **Sector Ranking**: Top 10 sector analysis with impact magnitude visualization
-- **Customizable Views**: Adjustable parameters for top N sectors, years, and effect types
+- **Customizable Views**: Adjustable parameters for years and effect types
 
 ### **Professional GUI Interface**
 - **Streamlit Web Application**: User-friendly interface with tabbed navigation
@@ -79,10 +79,11 @@ The application has three main modules accessible from the sidebar:
   - IO Table trends (1610=coal, 4506=renewables, 1610+4506=combined coal & renewables)
   - Hydrogen value chain trends (H2S=Hydrogen storage, H2T=Hydrogen transportation, H2S+H2T=both Hydrogen storage & transportation)
 - **🗺️ Sector Maps**: Top 10 sector impact analysis
-- **🔥 Code_H Heatmap**: Interactive heatmap by product category
-  - Ranked by absolute values
-  - Colored by true values (red=positive, blue=negative)
-  - Top N sectors per category (configurable 5-20)
+- **🌳 Code_H Treemap**: Interactive treemap by Code_H category
+  - Four coefficient tabs: Indirect Production, Indirect Import, Value Added, Job Creation
+  - Size represents impact magnitude (absolute values)
+  - Color indicates direction: 🟦 Positive (blue/green) vs 🔴 Negative (red)
+  - Shows coal+renewable+H2 value chain impacts
 - **📊 Scenario comparison**: Compare both scenarios (Optimized vs POSCO) side-by-side
 
 ## 📖 User Guide
@@ -118,15 +119,18 @@ The application has three main modules accessible from the sidebar:
 3. Select effect type and sectors
 4. Click **"Generate"**
 
-#### Code_H Heatmap
-1. Go to **Visualisation** → **🔥 Code_H Heatmap**
+#### Code_H Treemap
+1. Go to **Visualisation** → **🌳 Code_H Treemap**
 2. Select:
-   - Effect type (e.g., indirect_prod)
+   - Scenario sheet (Scenario1 or Scenario2)
    - Year (2026, 2030, 2040, or 2050)
-   - Top N sectors (5-20)
-3. Click **"🎨 Generate Heatmap"**
-4. View interactive heatmap with scenario information
-5. Hover over cells for details
+3. Choose one of four coefficient tabs:
+   - 💰 **Indirect Production**: Combined IO and H2 production effects
+   - 🌐 **Indirect Import**: Import-inducing effects
+   - 💎 **Value Added**: Combined IO and H2 value-added effects
+   - 👥 **Job Creation**: Total employment effects
+4. View interactive treemap automatically generated
+5. Hover over rectangles for detailed values
 
 ## 📁 Data Files
 
@@ -183,26 +187,29 @@ hydrogentable.xlsx | H2T    | 0          | 0          | ... | 4584183
 
 ## 🎨 Visualization Features
 
-### Code_H Heatmap
+### Code_H Treemap
 
-The Code_H heatmap provides a comprehensive view of sector impacts:
+The Code_H treemap provides a comprehensive view of sector impacts aggregated by Code_H categories:
 
 **Features**:
-- **X-axis**: Product_H categories (Korean product names)
-- **Y-axis**: Ranking (#1 to #10 or custom top N)
-- **Cell Colors**: Impact values (diverging colormap)
-  - 🔴 Red = Positive impact
-  - 🔵 Blue = Negative impact
-  - ⚪ White = Near zero
-- **Cell Text**: Sector names split into 3 lines (very small font)
-- **Ranking Method**: By absolute values (magnitude)
-- **Coloring Method**: By true values (shows direction)
+- **Four Coefficient Tabs**:
+  - 💰 Indirect Production (indirect_prod + productioncoeff)
+  - 🌐 Indirect Import (indirect_import)
+  - 💎 Value Added (value_added + valueaddedcoeff)
+  - 👥 Job Creation (jobcoeff + directemploycoeff)
+- **Rectangle Size**: Proportional to impact magnitude (absolute value)
+  - Larger rectangle = Greater impact
+- **Rectangle Color**: Indicates direction of impact
+  - 🟦 Blue/Green = Positive impact (increases)
+  - 🔴 Red/Orange = Negative impact (decreases)
+- **Labels**: Display Product_H category name and value with +/- sign
+- **Data Source**: coal+renewable+H2 value chain (1610+4506+H2S+H2T)
 
 **Interactive Features**:
-- Hover for detailed information
-- Zoom and pan capabilities
-- Download as PNG or HTML
-- Responsive layout
+- Hover for detailed information (Code_H, Product_H, exact value)
+- Automatic layout optimization
+- Responsive design
+- Download as HTML
 
 ### Yearly Trends
 
@@ -251,7 +258,7 @@ steel_iotable/
 │   ├── io_analyzer.py              # I-O Table analysis (583 lines)
 │   ├── hydrogen_analyzer.py        # Hydrogen scenario analysis (242 lines)
 │   ├── scenario_analyzer.py        # Batch scenario processor (1066 lines)
-│   └── visualisation.py            # Visualization engine (1058 lines)
+│   └── visualisation.py            # Visualization engine (1150 lines)
 │
 ├── data/                           # Data files
 │   ├── Data_v11.xlsx               # Current data file with multiple scenarios ⭐
