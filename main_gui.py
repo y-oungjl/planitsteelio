@@ -336,8 +336,10 @@ def run_scenario_analysis():
                 st.write(f"이러한 이유로 분석에 활용된 계수 종류가 산업연관표에 따라 상이할 수 있습니다.")
                 st.write(f"(예: 한국은행 연장표 - 생산유발효과, 수입유발효과, 부가가치유발효과, 고용유발효과,취업유발효과)")
                 st.write(f"(예: 최수빈 외 2인 (2023) 산업연관표 - 생산유발효과, 부가가치유발효과, 임금유발효과, 취업유발효과)")
-                st.write(f"**Coal+Renewable+H2 value chain**의 **Job creation**은 **Coal+Renewable**의 **Job creation**과 **H2 value chain**의 **Direct Employment** 값을 합한 것입니다.")
+                st.write(f"Coal+Renewable+H2 value chain의 Job creation은 Coal+Renewable의 Job creation과 H2 value chain의 Direct Employment 값을 합한 것입니다.")
                 st.write(f"1610: Coal, 4506: Renewable, H2S: Hydrogen Storage, H2T: Hydrogen Transport")
+                st.write(f"시나리오 1 (최적화 시나리오) : 이전 연구인 ‘수소환원제철 국내 정착을 위한 핵심 과제’ 에서 한계감축비용곡선(MACC) 분석을 통한 도출한 가장 비용 효과적인 저탄소 철강 생산 기술 도입 경로를 채택한 최적화된 전환 시나리오")                
+                st.write(f"시나리오 2 (POSCO 시나리오) : POSCO 에서 2024 지속가능경영보고서를 통해 밝힌 전환 시나리오")
                 # Count years
                 # Get all effect types from the original results
                 effect_types = list(scenario_analyzer.aggregated_results.keys())
@@ -1292,7 +1294,6 @@ def show_total_tables():
     - Economic effects (Indirect Production, Import, Value Added): **Billion Won**
     - Job Creation = Coal+Renewable jobcoeff (Persons) + H2 directemploycoeff (Persons): **Persons**
 
-    Note: H2's jobcoeff is wage-inducing effect (Billion Won), NOT job creation
     """)
 
     summary_years = target_years
