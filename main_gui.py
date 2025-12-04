@@ -331,16 +331,33 @@ def run_scenario_analysis():
                 st.success(f"✅ Analysis complete for Data_v11.xlsx!")
 
                 # Show summary of results
-                st.markdown("### 📊 Analysis Summary")
-                st.write(f"Coal&Renewable(한국은행 2023년 연장표), 그리고 H2(최수빈 외 2인, 2023)는 분석에 활용한 산업연관표가 상이하기 때문에 구분해서 분석하고 결과를 도출하는 것을 권장합니다.")
-                st.write(f"이러한 이유로 분석에 활용된 계수 종류가 산업연관표에 따라 상이할 수 있습니다.")
-                st.write(f"(예: 한국은행 연장표 - 생산유발효과, 수입유발효과, 부가가치유발효과, 고용유발효과,취업유발효과)")
-                st.write(f"(예: 최수빈 외 2인 (2023) 산업연관표 - 생산유발효과, 부가가치유발효과, 임금유발효과, 취업유발효과)")
-                st.write(f"Coal+Renewable+H2 value chain의 Job creation은 Coal+Renewable의 Job creation과 H2 value chain의 Direct Employment 값을 합한 것입니다.")
-                st.write(f"1610: Coal, 4506: Renewable, H2S: Hydrogen Storage, H2T: Hydrogen Transport")
-                st.write(f"시나리오 1 (최적화 시나리오) : 이전 연구인 ‘수소환원제철 국내 정착을 위한 핵심 과제’ 에서 한계감축비용곡선(MACC) 분석을 통한 도출한 가장 비용 효과적인 저탄소 철강 생산 기술 도입 경로를 채택한 최적화된 전환 시나리오")                
-                st.write(f"시나리오 2 (POSCO 시나리오) : POSCO 에서 2024 지속가능경영보고서를 통해 밝힌 전환 시나리오")
-                # Count years
+                st.markdown("""
+                <div style="border-radius: 12px; background: linear-gradient(90deg, #ddefff 0%, #e6fced 100%); border: 1px solid #b5cddd; padding: 25px 25px 18px 25px; margin: 18px 0; font-size: 17px;">
+                  <strong>📘 Note</strong>
+                  <ul style="margin-top: 10px; margin-bottom: 0;">
+                    <li><strong>Coal&Renewable</strong> (한국은행 2023년 연장표), <strong>H2</strong> (최수빈 외 2인, 2023)는 분석에 활용한 <u>산업연관표가 상이</u>하기 때문에 <span style="color:#444;">구분해서 분석하고 결과를 도출하는 것을 권장</span>합니다.</li>
+                    <li>이로 인해 <u>분석에 활용된 계수 종류가 산업연관표에 따라 다를 수 있습니다</u>.</li>
+                    <li>
+                      <div style="padding-left:22px;">
+                        (예: <b>한국은행 연장표</b> - 생산유발효과, 수입유발효과, 부가가치유발효과, 고용유발효과, 취업유발효과)<br/>
+                        (예: <b>최수빈 외 2인 (2023) 산업연관표</b> - 생산유발효과, 부가가치유발효과, 임금유발효과, 취업유발효과)
+                      </div>
+                    </li>
+                    <li>Coal+Renewable+H2 value chain의 <b>Job creation</b>은 <b>Coal+Renewable의 Job creation</b>과 <b>H2 value chain의 Direct Employment</b> 값을 합한 것입니다.</li>
+                    <li>
+                      <b>코드 해설:</b> 1610: Coal, 4506: Renewable, H2S: Hydrogen Storage, H2T: Hydrogen Transport
+                    </li>
+                    <li>
+                      <b>시나리오 1 (최적화 시나리오)</b>: 
+                        이전 연구인 ‘수소환원제철 국내 정착을 위한 핵심 과제’에서 한계감축비용곡선(MACC) 분석을 통한, 가장 비용 효과적인 저탄소 철강 생산 기술 도입 경로를 채택한 최적화된 전환 시나리오
+                    </li>
+                    <li>
+                      <b>시나리오 2 (POSCO 시나리오)</b>: 
+                        POSCO에서 2024 지속가능경영보고서를 통해 밝힌 전환 시나리오
+                    </li>
+                  </ul>
+                </div>
+                """, unsafe_allow_html=True)
                 # Get all effect types from the original results
                 effect_types = list(scenario_analyzer.aggregated_results.keys())
 
@@ -418,13 +435,30 @@ def filter_results_by_scenario_sheet(scenario_analyzer, sheet_name):
 
                 # Also create code_h grouped impacts
                 all_code_h_impacts = {}
+
+                # Define fallback names for H2 and other sectors
+                sector_fallback_names = {
+                    'H2S': '수소 저장',
+                    'H2T': '수소 운송'
+                }
+
                 for sector_code, data in all_sector_impacts.items():
-                    # Map to code_h
+                    # Map to code_h and product_h from codemap
                     code_h = ''
                     product_h = ''
                     if hasattr(scenario_analyzer, 'io_analyzer') and scenario_analyzer.io_analyzer:
                         code_h = scenario_analyzer.io_analyzer.basic_to_code_h.get(sector_code, sector_code)
                         product_h = scenario_analyzer.io_analyzer.code_h_to_product_h.get(code_h, '') if code_h else ''
+
+                    # If no product_h found (e.g., for H2 sectors or unmapped codes), use fallback
+                    if not product_h:
+                        if sector_code in sector_fallback_names:
+                            product_h = sector_fallback_names[sector_code]
+                            code_h = sector_code  # Use sector code as code_h
+                        else:
+                            # Last resort: use sector_code as both code_h and product_h
+                            product_h = f"Sector {sector_code}"
+                            code_h = sector_code
 
                     # Use code_h as the grouping key
                     group_key = code_h if code_h else sector_code
@@ -2325,63 +2359,135 @@ def show_summary_visualizations():
                         st.caption(f"Calculated from: {config['description']}")
 
                         try:
-                            # Collect code_h impacts from all relevant effects
-                            combined_impacts = {}
+                            # Special handling for Job Creation (use sub-sector level)
+                            if config['name'] == '👥 Job Creation':
+                                # Collect sub-sector level impacts from sector_impacts
+                                combined_impacts = {}
 
-                            for effect_type in config['effects']:
-                                if effect_type in sheet_results and treemap_year in sheet_results[effect_type]:
-                                    year_data = sheet_results[effect_type][treemap_year]
-                                    code_h_impacts = year_data.get('code_h_impacts', [])
+                                for effect_type in config['effects']:
+                                    if effect_type in sheet_results and treemap_year in sheet_results[effect_type]:
+                                        year_data = sheet_results[effect_type][treemap_year]
+                                        sector_impacts = year_data.get('sector_impacts', [])
 
-                                    for impact in code_h_impacts:
-                                        code_h = impact['code_h']
-                                        product_h = impact['product_h']
-                                        total_impact = impact['total_impact']
+                                        for impact in sector_impacts:
+                                            sector_code = str(impact['sector_code'])
+                                            sector_name = impact['sector_name']
+                                            total_impact = impact['total_impact']
 
-                                        if code_h not in combined_impacts:
-                                            combined_impacts[code_h] = {
-                                                'code_h': code_h,
-                                                'product_h': product_h,
-                                                'total_impact': 0
-                                            }
-                                        combined_impacts[code_h]['total_impact'] += total_impact
+                                            # Get sub-sector name from subsectormap
+                                            if hasattr(scenario_analyzer, 'io_analyzer') and scenario_analyzer.io_analyzer:
+                                                subsector_name = scenario_analyzer.io_analyzer.subsector_to_name.get(sector_code, sector_name)
+                                            else:
+                                                subsector_name = sector_name
 
-                            if not combined_impacts:
-                                st.warning(f"No data available for {config['name']} in year {treemap_year}")
-                            else:
-                                # Prepare data for treemap
-                                data_rows = []
-                                value_column = f"{config['name']}_{treemap_year}"
+                                            # For H2 sectors, use Korean names
+                                            if sector_code in ['H2S', 'H2T']:
+                                                h2_names = {'H2S': '수소 저장', 'H2T': '수소 운송'}
+                                                subsector_name = h2_names[sector_code]
 
-                                for code_h, data in combined_impacts.items():
-                                    data_rows.append({
-                                        'Code_H': data['code_h'],
-                                        'Product_H': data['product_h'] if data['product_h'] else code_h,
-                                        value_column: data['total_impact']
-                                    })
+                                            if sector_code not in combined_impacts:
+                                                combined_impacts[sector_code] = {
+                                                    'sector_code': sector_code,
+                                                    'sector_name': subsector_name,
+                                                    'total_impact': 0
+                                                }
+                                            combined_impacts[sector_code]['total_impact'] += total_impact
 
-                                if data_rows:
-                                    df = pd.DataFrame(data_rows)
-
-                                    with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp_file:
-                                        output_path = tmp_file.name
-
-                                    # Generate treemap
-                                    fig = Visualization.plot_code_h_treemap(
-                                        df=df,
-                                        effect=config['name'],
-                                        year=treemap_year,
-                                        output_path=output_path
-                                    )
-
-                                    try:
-                                        os.remove(output_path)
-                                    except OSError:
-                                        pass
-
-                                    st.plotly_chart(fig, use_container_width=True)
+                                if not combined_impacts:
+                                    st.warning(f"No data available for {config['name']} in year {treemap_year}")
                                 else:
-                                    st.warning("No data to display")
+                                    # Prepare data for treemap (sub-sector level)
+                                    data_rows = []
+                                    value_column = f"{config['name']}_{treemap_year}"
+
+                                    for sector_code, data in combined_impacts.items():
+                                        data_rows.append({
+                                            'Code_H': data['sector_code'],
+                                            'Product_H': data['sector_name'],
+                                            value_column: data['total_impact']
+                                        })
+
+                                    if data_rows:
+                                        df = pd.DataFrame(data_rows)
+
+                                        with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp_file:
+                                            output_path = tmp_file.name
+
+                                        # Generate treemap
+                                        fig = Visualization.plot_code_h_treemap(
+                                            df=df,
+                                            effect=config['name'],
+                                            year=treemap_year,
+                                            output_path=output_path
+                                        )
+
+                                        try:
+                                            os.remove(output_path)
+                                        except OSError:
+                                            pass
+
+                                        st.plotly_chart(fig, use_container_width=True)
+                                    else:
+                                        st.warning("No data to display")
+
+                            else:
+                                # For other coefficients, use code_h level
+                                combined_impacts = {}
+
+                                for effect_type in config['effects']:
+                                    if effect_type in sheet_results and treemap_year in sheet_results[effect_type]:
+                                        year_data = sheet_results[effect_type][treemap_year]
+                                        code_h_impacts = year_data.get('code_h_impacts', [])
+
+                                        for impact in code_h_impacts:
+                                            code_h = impact['code_h']
+                                            product_h = impact['product_h']
+                                            total_impact = impact['total_impact']
+
+                                            if code_h not in combined_impacts:
+                                                combined_impacts[code_h] = {
+                                                    'code_h': code_h,
+                                                    'product_h': product_h,
+                                                    'total_impact': 0
+                                                }
+                                            combined_impacts[code_h]['total_impact'] += total_impact
+
+                                if not combined_impacts:
+                                    st.warning(f"No data available for {config['name']} in year {treemap_year}")
+                                else:
+                                    # Prepare data for treemap (code_h level)
+                                    data_rows = []
+                                    value_column = f"{config['name']}_{treemap_year}"
+
+                                    for code_h, data in combined_impacts.items():
+                                        data_rows.append({
+                                            'Code_H': data['code_h'],
+                                            'Product_H': data['product_h'] if data['product_h'] else code_h,
+                                            value_column: data['total_impact']
+                                        })
+
+                                    if data_rows:
+                                        df = pd.DataFrame(data_rows)
+
+                                        with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp_file:
+                                            output_path = tmp_file.name
+
+                                        # Generate treemap
+                                        fig = Visualization.plot_code_h_treemap(
+                                            df=df,
+                                            effect=config['name'],
+                                            year=treemap_year,
+                                            output_path=output_path
+                                        )
+
+                                        try:
+                                            os.remove(output_path)
+                                        except OSError:
+                                            pass
+
+                                        st.plotly_chart(fig, use_container_width=True)
+                                    else:
+                                        st.warning("No data to display")
 
                         except Exception as e:
                             st.error(f"❌ Error generating treemap: {e}")
