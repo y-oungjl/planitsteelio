@@ -331,7 +331,7 @@ def run_scenario_analysis():
                 st.success(f"✅ Analysis complete for Data_v11.xlsx!")
 
                 # Show summary of results
-                st.markdown("### Note")
+                st.markdown("### 📊 Analysis Summary")
                 st.write(f"Coal&Renewable(한국은행 2023년 연장표), 그리고 H2(최수빈 외 2인, 2023)는 분석에 활용한 산업연관표가 상이하기 때문에 구분해서 분석하고 결과를 도출하는 것을 권장합니다.")
                 st.write(f"이러한 이유로 분석에 활용된 계수 종류가 산업연관표에 따라 상이할 수 있습니다.")
                 st.write(f"(예: 한국은행 연장표 - 생산유발효과, 수입유발효과, 부가가치유발효과, 고용유발효과,취업유발효과)")
@@ -416,12 +416,50 @@ def filter_results_by_scenario_sheet(scenario_analyzer, sheet_name):
 
                 aggregated_impacts.sort(key=lambda x: abs(x['total_impact']), reverse=True)
 
+                # Also create code_h grouped impacts
+                all_code_h_impacts = {}
+                for sector_code, data in all_sector_impacts.items():
+                    # Map to code_h
+                    code_h = ''
+                    product_h = ''
+                    if hasattr(scenario_analyzer, 'io_analyzer') and scenario_analyzer.io_analyzer:
+                        code_h = scenario_analyzer.io_analyzer.basic_to_code_h.get(sector_code, sector_code)
+                        product_h = scenario_analyzer.io_analyzer.code_h_to_product_h.get(code_h, '') if code_h else ''
+
+                    # Use code_h as the grouping key
+                    group_key = code_h if code_h else sector_code
+
+                    if group_key not in all_code_h_impacts:
+                        all_code_h_impacts[group_key] = {
+                            'code_h': code_h,
+                            'product_h': product_h,
+                            'total_impact': 0,
+                            'scenario_count': 0
+                        }
+
+                    all_code_h_impacts[group_key]['total_impact'] += data['total_impact']
+                    all_code_h_impacts[group_key]['scenario_count'] += data['scenario_count']
+
+                # Convert to sorted list
+                code_h_aggregated = []
+                for group_key, data in all_code_h_impacts.items():
+                    code_h_aggregated.append({
+                        'code_h': data['code_h'],
+                        'product_h': data['product_h'],
+                        'total_impact': data['total_impact'],
+                        'avg_impact': data['total_impact'] / data['scenario_count'],
+                        'scenario_count': data['scenario_count']
+                    })
+
+                code_h_aggregated.sort(key=lambda x: abs(x['total_impact']), reverse=True)
+
                 filtered_results[effect_type][year] = {
                     'total_aggregate_impact': total_aggregate_impact,
                     'scenario_count': scenario_count,
                     'avg_aggregate_impact': total_aggregate_impact / scenario_count if scenario_count > 0 else 0,
                     'num_affected_sectors': len(all_sector_impacts),
-                    'sector_impacts': aggregated_impacts
+                    'sector_impacts': aggregated_impacts,
+                    'code_h_impacts': code_h_aggregated
                 }
 
     return filtered_results
@@ -2207,8 +2245,8 @@ def show_summary_visualizations():
 
     # TAB 3: Code_H Heatmap
     with viz_tabs[2]:
-        st.markdown("### 🔥 Code_H Sector Heatmap")
-        st.markdown("Interactive heatmap showing top sectors by Product_H category, ranked by impact magnitude")
+        st.markdown("### 🔥 Code_H Category Heatmap")
+        st.markdown("Interactive heatmap showing impacts aggregated by Code_H categories (coal+renewable+H2 value chain)")
 
         # Scenario sheet selector at the top
         if not hasattr(scenario_analyzer, 'scenario_sheet_names'):
@@ -2246,7 +2284,7 @@ def show_summary_visualizations():
             if not available_effects:
                 st.warning("No effect types available for the selected scenario sheet.")
             else:
-                st.info("💡 **How to use**: Choose an effect type and year, then generate the heatmap to view the top sectors per Product_H category.")
+                st.info("💡 **How to use**: Choose an effect type and year, then generate the heatmap to view Code_H category impacts from coal+renewable+H2 value chain.")
 
                 col1, col2, col3 = st.columns(3)
 
@@ -2275,12 +2313,13 @@ def show_summary_visualizations():
 
                     with col3:
                         heatmap_top_n = st.slider(
-                            "Top N Sectors per Category",
+                            "Display Limit",
                             min_value=5,
                             max_value=20,
                             value=10,
                             step=5,
-                            key="heatmap_top_n"
+                            key="heatmap_top_n",
+                            help="Number of top Code_H categories to display"
                         )
 
                     if st.button("🎨 Generate Heatmap", type="primary", key="btn_heatmap"):
@@ -2290,34 +2329,25 @@ def show_summary_visualizations():
                                 if not year_data:
                                     st.error(f"No data found for {heatmap_year}.")
                                 else:
-                                    sector_impacts = year_data['sector_impacts']
-                                    if not sector_impacts:
-                                        st.warning("No sector impacts available for visualization.")
+                                    # Use code_h_impacts instead of sector_impacts
+                                    code_h_impacts = year_data.get('code_h_impacts', [])
+                                    if not code_h_impacts:
+                                        st.warning("No code_h impacts available for visualization.")
                                     else:
                                         data_rows = []
                                         value_column = f"{heatmap_effect}_{heatmap_year}"
 
-                                        for impact in sector_impacts:
-                                            sector_code = str(impact['sector_code'])
-                                            sector_name = impact['sector_name']
+                                        for impact in code_h_impacts:
+                                            code_h = impact['code_h']
+                                            product_h = impact['product_h']
                                             total_impact = impact['total_impact']
 
-                                            code_h = ''
-                                            product_h = ''
-                                            if hasattr(scenario_analyzer, 'io_analyzer') and scenario_analyzer.io_analyzer:
-                                                code_h = scenario_analyzer.io_analyzer.basic_to_code_h.get(sector_code, '')
-                                                if code_h:
-                                                    product_h = scenario_analyzer.io_analyzer.code_h_to_product_h.get(code_h, code_h)
-
-                                            if not code_h:
-                                                code_h = sector_code
-                                                product_h = f"H2 Scenario ({sector_code})"
-
+                                            # Use Product_H as Sector_Name for the heatmap
+                                            # Since we're showing Code_H categories, each category represents itself
                                             data_rows.append({
-                                                'Sector_Code': sector_code,
-                                                'Sector_Name': sector_name,
                                                 'Code_H': code_h,
                                                 'Product_H': product_h,
+                                                'Sector_Name': product_h if product_h else code_h,
                                                 value_column: total_impact
                                             })
 
